@@ -13,7 +13,11 @@ export default defineConfig({
     projects: [
       {
         plugins,
-        test: { globals: true, include: ["src/**/*.spec.ts"], name: "unit" },
+        test: {
+          globals: true,
+          include: ["src/**/*.spec.ts", "scripts/**/*.spec.ts"],
+          name: "unit",
+        },
       },
       {
         plugins,

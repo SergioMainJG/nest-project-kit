@@ -91,6 +91,8 @@ Las opciones se resuelven en orden y **de forma condicional**: si una no aplica 
 
 ## Qué genera
 
+Todos los proyectos se generan como **ESM**, el formato por defecto a partir de NestJS 12, y esto no se pregunta: `"type": "module"`, `module`/`moduleResolution` en `nodenext` e imports relativos con extensión `.js`. CommonJS, que NestJS mantiene por compatibilidad con proyectos anteriores a la v12, no se genera.
+
 Cada proyecto incluye `package.json` con versiones exactas, `tsconfig`, Vitest con pruebas unitarias y e2e, `.env`, `template.env` y `scripts/secrets.ts`:
 
 ```bash
@@ -153,3 +155,13 @@ El workflow publica con _provenance_. Para no necesitar el secreto `NPM_TOKEN`, 
 - `src/cli/`: comando `new` de nest-commander (un flag por opción del catálogo), escritura a disco, `bun install`, git y reporte.
 
 Las versiones de los paquetes generados están fijadas en `src/generator/versions.ts`.
+
+## Licencia
+
+[MIT](LICENSE.md) © 2026 Sergio Elias Arce Roldán.
+
+- **[NOTICE.md](NOTICE.md)**: es una herramienta **independiente y no oficial**, sin afiliación con NestJS ni respaldo del proyecto. Incluye la atribución a NestJS (MIT, © Kamil Mysliwiec) y el origen de las plantillas. También aclara que **el código generado es tuyo** y puedes licenciarlo como quieras, incluso de forma privativa.
+- **[MODIFICATIONS.md](MODIFICATIONS.md)**: qué exige la licencia para modificar y redistribuir la herramienta, recomendaciones para forks y licencia de las contribuciones.
+- **`dist/THIRD_PARTY_LICENSES.md`**: avisos y licencias de las dependencias empaquetadas en `dist/main.cjs`. Se genera en cada build.
+
+> El adaptador de terceros `nestjs-platform-bun` (opción `--framework bun`) no declara licencia. Revisa su estado antes de distribuir un proyecto que lo use.

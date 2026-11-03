@@ -3,6 +3,7 @@ import { rspack } from "@rspack/core";
 import { createRequire } from "node:module";
 
 import pkg from "./package.json" with { type: "json" };
+import { ThirdPartyLicensesPlugin } from "./scripts/third-party-licenses.js";
 
 const require = createRequire(import.meta.url);
 
@@ -85,11 +86,22 @@ export default defineConfig({
     library: { type: "commonjs2" },
   },
   plugins: [
-    new rspack.BannerPlugin({ banner: "#!/usr/bin/env node", entryOnly: true, raw: true }),
+    new rspack.BannerPlugin({
+      banner: [
+        "#!/usr/bin/env node",
+        `/*! ${pkg.name} ${pkg.version} | MIT License | (c) ${pkg.author}`,
+        " * Bundled third-party code: see THIRD_PARTY_LICENSES.md */",
+      ].join("\n"),
+      entryOnly: true,
+      raw: true,
+      // After minification, so the license comment survives.
+      stage: rspack.Compilation.PROCESS_ASSETS_STAGE_REPORT,
+    }),
     new rspack.DefinePlugin({ NEST_GENERATOR_VERSION: JSON.stringify(pkg.version) }),
     new rspack.IgnorePlugin({ checkResource: shouldIgnore }),
     // A single file: dynamic imports in dependencies would otherwise become extra chunks.
     new rspack.optimize.LimitChunkCountPlugin({ maxChunks: 1 }),
+    new ThirdPartyLicensesPlugin(),
   ],
   resolve: {
     extensionAlias: { ".js": [".ts", ".js"] },

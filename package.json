@@ -30,7 +30,10 @@
     "nest-project-kit": "dist/main.cjs"
   },
   "files": [
-    "dist/main.cjs"
+    "dist/main.cjs",
+    "dist/THIRD_PARTY_LICENSES.md",
+    "MODIFICATIONS.md",
+    "NOTICE.md"
   ],
   "type": "module",
   "publishConfig": {
