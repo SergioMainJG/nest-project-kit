@@ -26,5 +26,13 @@ export default defineConfig({
 
   sortPackageJson: true,
 
-  ignorePatterns: ["dist/**", "coverage/**", "pnpm-lock.yaml", "package-lock.json", "bun.lock"],
+  ignorePatterns: [
+    "dist/**",
+    "coverage/**",
+    "reference/**",
+    ".specs/**",
+    "pnpm-lock.yaml",
+    "package-lock.json",
+    "bun.lock",
+  ],
 });

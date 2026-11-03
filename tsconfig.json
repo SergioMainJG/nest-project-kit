@@ -5,19 +5,18 @@
     "resolvePackageJsonExports": true,
     "esModuleInterop": true,
     "isolatedModules": true,
-    "declaration": true,
-    "removeComments": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
     "target": "ES2023",
-    "sourceMap": true,
-    "outDir": "./dist",
-    "incremental": true,
+    "lib": ["ES2023"],
     "skipLibCheck": true,
     "strict": true,
+    "noUncheckedIndexedAccess": true,
     "strictPropertyInitialization": false,
-    "types": ["vitest/globals", "bun"]
+    "noEmit": true,
+    "types": ["vitest/globals", "node", "bun"]
   },
-  "exclude": ["node_modules", "dist", "coverage", "drizzle"]
+  "include": ["src", "test", "*.config.ts"],
+  "exclude": ["node_modules", "dist", "coverage", "reference"]
 }

@@ -1,174 +1,155 @@
-# NestJS template
+# @sergioar/nest-project-kit
 
-Plantilla de API REST lista para empezar un proyecto: NestJS 12 sobre Fastify, ejecutada con Bun.
+[![npm](https://img.shields.io/npm/v/@sergioar/nest-project-kit)](https://www.npmjs.com/package/@sergioar/nest-project-kit)
 
-| Área           | Stack                                                                    |
-| -------------- | ------------------------------------------------------------------------ |
-| Runtime        | Bun en todo: app, tests (`bun --bun vitest`), scripts y contenedor       |
-| HTTP           | Fastify, helmet, compresión, CORS, rate limiting (`@nestjs/throttler`)   |
-| Validación     | ArkType (Standard Schema) para envs, body y respuestas                   |
-| Base de datos  | PostgreSQL con `Bun.SQL` + Drizzle ORM (`@nestjs/drizzle`)               |
-| Cache          | cache-manager: memoria (L1) + Redis/Dragonfly (L2)                       |
-| Auth           | Passport local + JWT (HS256), contraseñas con `Bun.password` (argon2id)  |
-| Observabilidad | Winston, correlation id (UUIDv7), health checks, NestJS Observe opcional |
-| Docs de la API | Swagger + Scalar en `/reference`                                         |
-| Calidad        | oxfmt, oxlint (type-aware), vitest, lint-staged                          |
+CLI interactivo que genera proyectos **NestJS 12** con los plugins que elijas: adaptador HTTP, ORM, caché, validación, autenticación, documentación, logging, observabilidad, contenedores, proxy inverso, CI y más. Se basa en [template-nest-rest-api](https://github.com/SergioMainJG/template-nest-rest-api) (la copia de referencia está en `reference/`) y sigue las recomendaciones de la [documentación oficial de NestJS](https://docs.nestjs.com/).
 
-## Primeros pasos
+Está construido con **Bun**, **NestJS** + **nest-commander** (Commander) y se empaqueta con **rspack** en un único archivo CommonJS que corre en Node ≥ 22 o en Bun.
+
+## Instalación
+
+No hace falta instalarlo; se ejecuta con `npx` o `bunx`:
+
+```bash
+npx @sergioar/nest-project-kit
+bunx @sergioar/nest-project-kit
+```
+
+O de forma global, lo que instala los comandos `nest-project-kit` y su alias `nest-generator`:
+
+```bash
+npm install -g @sergioar/nest-project-kit
+bun add -g @sergioar/nest-project-kit
+```
+
+Requisitos: Node ≥ 22 o Bun para ejecutar el CLI, y **Bun** para instalar y correr los proyectos generados. Si Bun no está instalado, el proyecto se genera igual y solo se omite `bun install`.
+
+## Uso
+
+```bash
+# Modo interactivo: pregunta cada opción con las flechas del teclado
+npx @sergioar/nest-project-kit
+
+# Con nombre y flags; lo que falte se pregunta (o se usan los valores por defecto con -y)
+npx @sergioar/nest-project-kit new orders-api --framework express --orm typeorm --database-motor mysql
+npx @sergioar/nest-project-kit new orders-api -y         # todo por defecto, sin preguntas
+npx @sergioar/nest-project-kit new orders-api --dry-run  # lista los archivos sin escribirlos
+
+# Con la instalación global
+nest-project-kit new orders-api
+```
+
+Flags propios del comando `new`:
+
+| Flag                            | Descripción                                            |
+| ------------------------------- | ------------------------------------------------------ |
+| `-i, --interactive`             | pregunta toda opción que no se haya pasado como flag   |
+| `-y, --yes`                     | nunca pregunta; usa los valores por defecto            |
+| `--directory <path>`            | directorio padre del proyecto (por defecto, el actual) |
+| `--dry-run`                     | muestra los archivos que generaría sin escribir nada   |
+| `--skip-install` / `--skip-git` | no ejecuta `bun install` / no inicializa git           |
+
+Sin TTY (por ejemplo en CI) nunca se pregunta: el nombre es obligatorio y el resto toma su valor por defecto.
+
+## Opciones
+
+Las opciones se resuelven en orden y **de forma condicional**: si una no aplica a lo elegido antes, se omite (no se pregunta) y queda desactivada. Si la pasas explícitamente cuando no aplica, el CLI explica por qué y termina con código 64.
+
+| Opción            | Flag                 | Valores (por defecto en **negritas**)                                  | Condición                                                         |
+| ----------------- | -------------------- | ---------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| Tipo de app       | `--type-app`         | **api**, graphql, microservice, mvc, cli                               |                                                                   |
+| Adaptador HTTP    | `--framework`        | **fastify**, express, node, bun¹                                       | apps HTTP (api, graphql, mvc); graphql/mvc solo fastify o express |
+| Compilador TS     | `--ts-compiler`      | **swc**, tsc, default                                                  |                                                                   |
+| Validación        | `--validator`        | class, **arktype**, zod, valibot                                       |                                                                   |
+| ORM               | `--orm`              | **drizzle**, typeorm, mongodb, prisma, mikroorm, sequelize, none/false |                                                                   |
+| Base de datos     | `--database-motor`   | pg, mysql, sqlite, mongo                                               | requiere ORM; mongo solo con `mongodb`                            |
+| Usuarios + auth   | `--has-users`        | **true**, false                                                        | requiere ORM y app HTTP                                           |
+| Hashing           | `--hashing`          | **argon2**, bcrypt, none/false                                         | con usuarios no admite `none`                                     |
+| Auth oficial      | `--has-auth-2`       | true, **false** (`@nestjs/authentication` + `@nestjs/authorization`)   | requiere usuarios                                                 |
+| Caché             | `--cache`            | **dragonfly**, redis, valkey, memory, none/false                       |                                                                   |
+| Logger            | `--logger`           | **winston**, pino, nest, none/false                                    |                                                                   |
+| Observabilidad    | `--observability`    | nestjs (`@nestjs/observe`), sentry, **none**                           |                                                                   |
+| Documentación     | `--swagger`          | **scalar**, swagger, none/false (`true` = scalar)                      | api y mvc                                                         |
+| Health checks     | `--has-health`       | **true** (`terminus`), false                                           | apps HTTP                                                         |
+| Rate limiting     | `--has-throttler`    | **true** (`throttler`), false                                          | apps HTTP                                                         |
+| Correo            | `--has-mail`         | true (`@nestjs/mail`), **false**                                       |                                                                   |
+| Almacenamiento    | `--has-storage`      | true (`@nestjs/storage`), **false**                                    |                                                                   |
+| Resiliencia       | `--has-resilience`   | true (`@nestjs/resilience`), **false**                                 |                                                                   |
+| WebSockets        | `--ws`               | true (`@nestjs/websockets` + socket.io), **false**                     | apps HTTP                                                         |
+| OWASP             | `--has-owasp`        | **true**, false                                                        | apps HTTP; `false` desactiva y oculta las tres siguientes         |
+| Cabeceras seguras | `--has-safe-headers` | **true**, false                                                        | requiere OWASP                                                    |
+| CORS              | `--has-cors`         | **true**, false                                                        | requiere OWASP                                                    |
+| CSRF              | `--has-csrf`         | true, false (por defecto true solo en mvc)                             | requiere OWASP y express o fastify                                |
+| Contenedores      | `--containerization` | **podman** (Quadlets), docker (compose), none                          | no aplica a apps cli                                              |
+| Proxy inverso     | `--reverse-proxy`    | **caddy** (alias `candy`), nginx, none                                 | requiere app HTTP y contenedores                                  |
+| GitHub Actions    | `--gh-actions`       | **true**, false                                                        |                                                                   |
+| Formateador       | `--formatter`        | **oxfmt**, prettier, biome                                             |                                                                   |
+| Linter            | `--linter`           | **eslint**, biome, standardjs, none                                    |                                                                   |
+| Licencia          | `--license`          | **mit**, none/false                                                    |                                                                   |
+
+¹ **Bun** usa [`nestjs-platform-bun`](https://github.com/Zaki-goumri/nestjs-platform-bun), una integración de terceros que **no** mantiene el equipo de NestJS. Al elegirla, el proyecto corre sobre Bun y las integraciones de terceros usan Bun por debajo (`Bun.env`, `Bun.password`, `@socket.io/bun-engine`, `bun:sqlite`…); las integraciones oficiales de NestJS 12.3 se mantienen.
+
+## Qué genera
+
+Cada proyecto incluye `package.json` con versiones exactas, `tsconfig`, Vitest con pruebas unitarias y e2e, `.env`, `template.env` y `scripts/secrets.ts`:
+
+```bash
+bun run secrets init          # crea .env desde template.env con secretos aleatorios
+bun run secrets check         # verifica que .env tenga todas las variables requeridas
+bun run secrets sync docker   # escribe .secrets/*-env para compose.yaml
+bun run secrets sync podman   # crea/actualiza los podman secrets de las Quadlets
+```
+
+Según las opciones, también genera el `Containerfile`/`Dockerfile`, las unidades Quadlet o `compose.yaml`, la configuración de Caddy o nginx, el workflow de GitHub Actions y la licencia.
+
+## Errores
+
+Todos los errores se muestran en stderr con un mensaje legible, una pista cuando la hay y un código de salida:
+
+| Código | Caso                                                                                 |
+| ------ | ------------------------------------------------------------------------------------ |
+| 64     | valor de flag inválido, opciones incompatibles, nombre inválido o faltante           |
+| 64     | nombre del proyecto inválido **3 veces** en modo interactivo (el programa se cierra) |
+| 74     | el directorio destino ya existe y no está vacío                                      |
+| 130    | cancelado con Ctrl+C                                                                 |
+| 1      | error inesperado (se muestra el stack)                                               |
+
+## Desarrollo
 
 ```bash
 bun install
-cp template.env .env
-openssl rand -base64 32   # pégalo en JWT_SECRET
-```
-
-Levanta Postgres y Dragonfly con los quadlets (Podman + systemd, rootless). Sus contraseñas salen de `DATABASE_URL` y `CACHE_URL`. Los scripts de `quadlets/` son scripts de Rust (`cargo +nightly -Zscript`), así que necesitas el toolchain nightly (`rustup toolchain install nightly`):
-
-```bash
-./quadlets/sync-secrets.rs   # .env → podman secrets
-./quadlets/install.rs postgres dragonfly --start
-```
-
-Aplica las migraciones y arranca en modo desarrollo:
-
-```bash
-bun run db:migrate
-bun run start:dev
-```
-
-- API: `http://localhost:3000`
-- Referencia de la API: `http://localhost:3000/reference`
-
-## Qué personalizar
-
-Todo lo específico de tu proyecto sale del `.env`: no hay nombres de app repartidos por el código.
-
-| Qué                               | Dónde                                                                |
-| --------------------------------- | -------------------------------------------------------------------- |
-| Nombre de la app                  | `APP_NAME` → logs, Swagger, `iss`/`aud` del JWT, Observe             |
-| Variables de entorno y su formato | `src/config/envs/envs.schema.ts` y `template.env`                    |
-| Límites de rate limiting          | `THROTTLERS` en `src/config/throttler/throttler-config.service.ts`   |
-| Cache en memoria (LRU, TTL)       | `src/config/cache/cache-config.service.ts`                           |
-| CSP de helmet, CORS               | `src/main.setup.ts`                                                  |
-| Tablas                            | `src/config/drizzle/schemas/` (exporta cada tabla en `index.ts`)     |
-| Contraseñas de la infraestructura | `DATABASE_URL` y `CACHE_URL` del `.env` (`quadlets/sync-secrets.rs`) |
-| Nombre del paquete y autor        | `package.json`, `LICENSE.md`                                         |
-
-Variables opcionales (no están en `template.env`; agrégalas solo si las usas):
-
-| Variable                                 | Efecto                                                                                                                |
-| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `LOG_LEVEL`                              | `error`, `warn`, `info`, `http`, `verbose`, `debug` o `silly`. Por defecto `info` en producción y `debug` en el resto |
-| `OBSERVE_APP_KEY` + `OBSERVE_APP_SECRET` | Activan NestJS Observe (https://observe.nestjs.com)                                                                   |
-
-## Estructura
-
-```
-src/
-├── auth/            registro, login (passport-local) y JWT (guard global + @Public())
-├── users/           tabla users, servicio y GET /users/me
-├── health/          GET /health/live y /health/ready (Postgres + cache)
-├── common/          @Public() y filtro global de errores
-├── config/          un servicio por integración (envs, drizzle, cache, jwt, logger, throttler, observe)
-├── main.setup.ts    configuración de Fastify/Nest compartida por main.ts y los e2e
-├── migrate.ts       aplica las migraciones de drizzle/ con Bun.SQL
-└── main.ts
-drizzle/             migraciones SQL generadas (se versionan)
-test/
-├── integration/     módulos reales contra PostgreSQL (PGlite)
-├── e2e/             la app completa vía HTTP (fastify.inject)
-└── utils/
-quadlets/            app (maestro), Postgres, Dragonfly y Caddy para Podman
-```
-
-## Endpoints
-
-| Método | Ruta             | Auth   | Descripción                           |
-| ------ | ---------------- | ------ | ------------------------------------- |
-| POST   | `/auth/register` | —      | Crea un usuario `{ email, password }` |
-| POST   | `/auth/login`    | —      | Devuelve `{ accessToken }`            |
-| GET    | `/users/me`      | Bearer | Usuario autenticado                   |
-| GET    | `/health/live`   | —      | El proceso responde                   |
-| GET    | `/health/ready`  | —      | Postgres y la cache responden         |
-
-Todas las rutas requieren JWT salvo las marcadas con `@Public()`. Los errores tienen siempre la forma `{ statusCode, error, message, path, timestamp, correlationId }`.
-
-## Scripts
-
-```bash
-bun run start:dev     # desarrollo con recarga
-bun run build         # typecheck + compilación con SWC a dist/
-bun run start:prod    # bun dist/main.js
-
-bun run test          # unitarios (src/**/*.spec.ts)
-bun run test:int      # integración (test/integration)
-bun run test:e2e      # e2e (test/e2e)
-bun run test:all      # todo
-bun run test:cov      # todo, con cobertura
-
-bun run db:generate   # genera una migración a partir de los cambios en schemas/
-bun run db:migrate    # aplica las migraciones pendientes (src/migrate.ts, usa DATABASE_URL)
-bun run db:studio     # explorador de la base de datos
-
-bun run check         # formato + lint
+bun run dev -- new demo --dry-run   # ejecuta el CLI desde src/
+bun run check                       # oxfmt --check && oxlint (type-aware)
 bun run typecheck
+bun run test                        # unitarias: src/**/*.spec.ts
+bun run test:int                    # integración: test/integration/**/*.int-spec.ts
+bun run build                       # rspack → dist/main.cjs (un solo archivo, minificado)
+node dist/main.cjs --help
 ```
 
-Los tests de integración y e2e no necesitan infraestructura: usan PostgreSQL real en memoria (PGlite, con las mismas migraciones) y cache en memoria. El entorno de test está en `test/test-env.ts`; el `.env` local se ignora con `NODE_ENV=test`.
+### Publicación
 
-## Git hooks
-
-`bun install` instala un hook de pre-commit (simple-git-hooks) que ejecuta lint-staged: `oxlint --fix` y `oxfmt` sobre los archivos en stage. Si lo cambias en `package.json`, reinstálalo con `bunx simple-git-hooks`.
-
-## Despliegue con Quadlet
-
-`quadlets/app` es la unidad maestra: al arrancarla, systemd construye la imagen desde este repositorio y levanta el resto.
-
-| Archivo     | Qué hace                                                                                         |
-| ----------- | ------------------------------------------------------------------------------------------------ |
-| `app.build` | `app-build.service`: `podman build` del `Containerfile` del repo → `localhost/app:latest`        |
-| `app.kube`  | `app.service`: requiere `app-build`, `postgres` y `dragonfly`; arranca `caddy` si está instalado |
-| `app.yaml`  | Pod con un initContainer que aplica las migraciones (`bun dist/migrate.js`) y la API             |
-
-Los YAML no llevan variables ni contraseñas: `quadlets/sync-secrets.rs` lee el `.env` y crea un podman secret por pod, que los YAML referencian con `envFrom`/`secretKeyRef`.
-
-| Secret          | Contenido                                                                                      |
-| --------------- | ---------------------------------------------------------------------------------------------- |
-| `app-env`       | Las variables de `template.env` y las opcionales (`LOG_LEVEL`, `OBSERVE_*`) si están definidas |
-| `postgres-env`  | `POSTGRES_USER`, `POSTGRES_PASSWORD` y `POSTGRES_DB`, sacados de `DATABASE_URL`                |
-| `dragonfly-env` | `DFLY_requirepass`, sacado de la contraseña de `CACHE_URL`                                     |
-
-`NODE_ENV`, `HOST` y `PORT` los fija `app.yaml` (producción, `127.0.0.1:3000`); si están en el `.env` se ignoran.
+El paquete publica un solo archivo (`dist/main.cjs`) sin dependencias de runtime, porque todo va empaquetado. `prepublishOnly` corre `check`, `typecheck`, todas las pruebas y el build antes de publicar.
 
 ```bash
-./quadlets/sync-secrets.rs      # o ./quadlets/sync-secrets.rs ruta/a/prod.env
-./quadlets/install.rs
-systemctl --user start app.service
+npm pack --dry-run        # revisa qué se va a publicar
+npm publish               # primera publicación, manual (requiere npm login)
 ```
 
-Al cambiar el `.env`, vuelve a ejecutar `sync-secrets.rs` y reinicia los servicios. Postgres solo aplica `POSTGRES_PASSWORD` al crear el volumen: con datos existentes, cambia la contraseña también con `ALTER USER`.
-
-`install.rs` sustituye las rutas del repo, instala `app` al final y, con `--start`, la arranca después de sus dependencias. La API usa la red del host y escucha en `127.0.0.1:3000`; Caddy la publica en 80/443.
-
-Sin Quadlet:
+Las siguientes versiones se publican desde GitHub Actions (`.github/workflows/release.yml`) al subir un tag que coincida con la versión de `package.json`:
 
 ```bash
-podman build -t my-app .
-podman run --rm --env-file .env my-app bun dist/migrate.js
-podman run --env-file .env -p 3000:3000 my-app
+npm version minor         # 0.1.0 → 0.2.0, crea el commit y el tag v0.2.0
+git push --follow-tags
 ```
 
-## CI/CD
+El workflow publica con _provenance_. Para no necesitar el secreto `NPM_TOKEN`, configura **Trusted Publishing** en npmjs.com (paquete → Settings → Trusted publishers) con este repositorio, el workflow `release.yml` y el entorno `npm`.
 
-Los workflows no tienen nada específico del proyecto: la versión de Bun sale de `packageManager` en `package.json` y las imágenes de Postgres y Dragonfly, de `quadlets/`. Cambiarlas ahí actualiza la CI.
+### Arquitectura
 
-| Workflow    | Cuándo                                    | Qué hace                                                                                                                                                   |
-| ----------- | ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `01-ci.yml` | Pull requests, manual y desde `02-cd.yml` | Formato, lint y typecheck · tests (unit, integración, e2e) · build, migraciones y endpoints contra Postgres y Dragonfly reales · build del `Containerfile` |
-| `02-cd.yml` | Push a `main`, tags `vX.Y.Z` y manual     | Ejecuta el CI; si pasa, publica `ghcr.io/<owner>/<repo>` (`main`, `latest`, `sha-…`, `X.Y.Z`, `X.Y`) y, en tags, crea la release de GitHub                 |
+- `src/options/`: catálogo declarativo de opciones (`catalog/`), reglas condicionales (`option-rules.ts`), normalización de valores y `resolveOptions()`, que valida flags, aplica las condiciones y completa el resto preguntando o con valores por defecto.
+- `src/prompts/`: puerto de prompts (`@inquirer/prompts`) y `askWithRetry()` (3 intentos para datos obligatorios).
+- `src/generator/`: cada plugin es un `Feature` que agrega archivos, dependencias, variables de entorno y piezas de `app.module.ts`/`main.ts` a un `Blueprint`; los `renderers/` lo convierten en archivos. `buildProject()` es puro (sin disco ni red).
+- `src/cli/`: comando `new` de nest-commander (un flag por opción del catálogo), escritura a disco, `bun install`, git y reporte.
 
-La publicación usa `GITHUB_TOKEN`: no hay secretos que configurar. Si el repositorio es privado, el paquete de GHCR también lo es.
-
-## Licencia
-
-[MIT](LICENSE.md)
+Las versiones de los paquetes generados están fijadas en `src/generator/versions.ts`.
