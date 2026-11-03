@@ -20,7 +20,7 @@ export default defineConfig({
     suspicious: "error",
   },
 
-  ignorePatterns: ["dist/**", "coverage/**", "**/generated/**"],
+  ignorePatterns: ["dist/**", "coverage/**", "reference/**", "**/generated/**"],
 
   rules: {
     "eslint/arrow-body-style": ["error", "as-needed"],
@@ -39,6 +39,7 @@ export default defineConfig({
     "eslint/no-nested-ternary": "error",
     "eslint/no-param-reassign": "error",
     "import/max-dependencies": ["error", { max: 15 }],
+    "import/no-unassigned-import": ["error", { allow: ["reflect-metadata"] }],
     "typescript/array-type": ["error", { default: "array-simple" }],
     "typescript/consistent-indexed-object-style": ["error", "record"],
     "typescript/consistent-type-assertions": [
@@ -99,7 +100,15 @@ export default defineConfig({
       },
     },
     {
-      files: ["src/app.module.ts"],
+      // One small, cohesive error hierarchy reads best in a single file.
+      files: ["src/errors/generator-errors.ts"],
+      rules: {
+        "eslint/max-classes-per-file": "off",
+      },
+    },
+    {
+      // Composition roots: they exist to wire many modules together.
+      files: ["src/app.module.ts", "src/generator/features/index.ts"],
       rules: {
         "import/max-dependencies": "off",
       },

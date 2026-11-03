@@ -1,0 +1,93 @@
+{
+  "name": "@sergioar/nest-project-kit",
+  "version": "0.1.0",
+  "description": "Interactive CLI that scaffolds NestJS projects with the plugins you pick (ORM, cache, auth, docs, logging, containers, CI and more).",
+  "keywords": [
+    "bun",
+    "cli",
+    "drizzle",
+    "fastify",
+    "generator",
+    "nest",
+    "nestjs",
+    "prisma",
+    "scaffolding",
+    "template",
+    "typeorm"
+  ],
+  "homepage": "https://github.com/SergioMainJG/template-nest-rest-api#readme",
+  "bugs": {
+    "url": "https://github.com/SergioMainJG/template-nest-rest-api/issues"
+  },
+  "license": "MIT",
+  "author": "Sergio Elias Arce Roldán",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SergioMainJG/template-nest-rest-api.git"
+  },
+  "bin": {
+    "nest-generator": "dist/main.cjs",
+    "nest-project-kit": "dist/main.cjs"
+  },
+  "files": [
+    "dist/main.cjs"
+  ],
+  "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "bun --bun rspack build --config rspack.config.ts",
+    "check": "oxfmt --check && oxlint",
+    "dev": "bun src/main.ts",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "prepare": "simple-git-hooks",
+    "prepublishOnly": "bun run check && bun run typecheck && bun run test:all && bun run build",
+    "start": "node dist/main.cjs",
+    "test": "bun --bun vitest run --project unit",
+    "test:all": "bun --bun vitest run",
+    "test:cov": "bun --bun vitest run --coverage",
+    "test:int": "bun --bun vitest run --project integration",
+    "test:watch": "bun --bun vitest --project unit",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@inquirer/prompts": "8.7.5",
+    "@nestjs/common": "12.3.2",
+    "@nestjs/core": "12.3.2",
+    "@nestjs/testing": "12.3.2",
+    "@rspack/cli": "2.3.1",
+    "@rspack/core": "2.3.1",
+    "@swc/core": "1.16.21",
+    "@types/bun": "1.4.4",
+    "@types/node": "26.6.6",
+    "@vitest/coverage-v8": "5.1.0",
+    "eslint-plugin-perfectionist": "5.12.1",
+    "lint-staged": "17.6.0",
+    "nest-commander": "3.21.0",
+    "oxfmt": "0.76.0",
+    "oxlint": "1.91.0",
+    "oxlint-tsgolint": "7.0.2005",
+    "picocolors": "1.1.1",
+    "reflect-metadata": "0.2.2",
+    "rxjs": "7.8.2",
+    "simple-git-hooks": "2.14.0",
+    "typescript": "6.0.3",
+    "unplugin-swc": "2.0.0",
+    "vitest": "5.1.0"
+  },
+  "simple-git-hooks": {
+    "pre-commit": "bunx lint-staged --config package.json"
+  },
+  "lint-staged": {
+    "{*.config.{ts,mts},{src,test}/**/*.{js,jsx,ts,tsx,mjs,cjs,mts,cts}}": "oxlint --fix",
+    "*": "oxfmt --no-error-on-unmatched-pattern"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "bun@1.4.3"
+}
