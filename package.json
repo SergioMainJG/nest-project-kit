@@ -1,6 +1,6 @@
 {
   "name": "@sergioar/nest-project-kit",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Interactive CLI that scaffolds NestJS projects with the plugins you pick (ORM, cache, auth, docs, logging, containers, CI and more).",
   "keywords": [
     "bun",
